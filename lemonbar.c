@@ -254,27 +254,28 @@ int xft_char_width (uint16_t ch, font_t *cur_font)
 }
 
 int
-shift (monitor_t *mon, int x, int align, int ch_width)
+shift (monitor_t *mon, int x, int align, int ch_width, int y, int ch_height)
 {
+    //printf("y= %d, ch_height = %d\r\n", y, ch_height);
     switch (align) {
         case ALIGN_C:
             xcb_copy_area(c, mon->pixmap, mon->pixmap, gc[GC_DRAW],
-                    mon->width / 2 - x / 2, 0,
-                    mon->width / 2 - (x + ch_width) / 2, 0,
-                    x, bh);
+                    mon->width / 2 - x / 2, y,
+                    mon->width / 2 - (x + ch_width) / 2, y,
+                    x, ch_height);
             x = mon->width / 2 - (x + ch_width) / 2 + x;
             break;
         case ALIGN_R:
             xcb_copy_area(c, mon->pixmap, mon->pixmap, gc[GC_DRAW],
-                    mon->width - x, 0,
-                    mon->width - x - ch_width, 0,
-                    x, bh);
+                    mon->width - x, y,
+                    mon->width - x - ch_width, y,
+                    x, ch_height);
             x = mon->width - ch_width;
             break;
     }
     
-        /* Draw the background first */
-    fill_rect(mon->pixmap, gc[GC_CLEAR], x, 0, ch_width, bh);
+    /* Draw the background first */
+    fill_rect(mon->pixmap, gc[GC_CLEAR], x, y, ch_width, ch_height);
     return x;
 }
 
@@ -291,7 +292,7 @@ draw_lines (monitor_t *mon, int x, int w)
 void
 draw_shift (monitor_t *mon, int x, int align, int w)
 {
-    x = shift(mon, x, align, w);
+    x = shift(mon, x, align, w, 0, bh);
     draw_lines(mon, x, w);
 }
 
@@ -308,9 +309,10 @@ draw_char (monitor_t *mon, font_t *cur_font, int x, int align, uint16_t ch)
             cur_font->width;
     }
 
-    x = shift(mon, x, align, ch_width);
-
     int y = bh / 2 + cur_font->height / 2- cur_font->descent + offsets_y[offset_y_index];
+    int ch_height = cur_font->ascent + cur_font->descent;
+    x = shift(mon, x, align, ch_width, y-ch_height, ch_height);
+    
     if (cur_font->xft_ft) {
         XftDrawString16 (xft_draw, &sel_fg, cur_font->xft_ft, x,y, &ch, 1);
     } else {
@@ -407,7 +409,7 @@ set_attribute (const char modifier, const char attribute)
     int pos = indexof(attribute, "ou");
 
     if (pos < 0) {
-        fprintf(stderr, "Invalid attribute \"%c\" found\n", attribute);
+        fprintf(stderr, "Invalid attribute \"%c\" found [modifier='%c']\n", attribute, modifier);
         return;
     }
 
