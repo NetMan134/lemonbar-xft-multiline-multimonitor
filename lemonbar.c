@@ -115,6 +115,7 @@ static int offset_y_index = 0;
 static uint32_t attrs = 0;
 static bool dock = false;
 static bool topbar = true;
+static bool multiline = false;
 static int bw = -1, bh = -1, bx = 0, by = 0;
 static int bu = 1; // Underline height
 static rgba_t fgc, bgc, ugc;
@@ -256,7 +257,6 @@ int xft_char_width (uint16_t ch, font_t *cur_font)
 int
 shift (monitor_t *mon, int x, int align, int ch_width, int y, int ch_height)
 {
-    //printf("y= %d, ch_height = %d\r\n", y, ch_height);
     switch (align) {
         case ALIGN_C:
             xcb_copy_area(c, mon->pixmap, mon->pixmap, gc[GC_DRAW],
@@ -310,8 +310,14 @@ draw_char (monitor_t *mon, font_t *cur_font, int x, int align, uint16_t ch)
     }
 
     int y = bh / 2 + cur_font->height / 2- cur_font->descent + offsets_y[offset_y_index];
-    int ch_height = cur_font->ascent + cur_font->descent;
-    x = shift(mon, x, align, ch_width, y-ch_height, ch_height);
+
+    if (multiline) {
+        int ch_height = cur_font->ascent;
+        x = shift(mon, x, align, ch_width, y-ch_height, ch_height);
+    } else {
+        x = shift(mon, x, align, ch_width, 0, bh);
+    }
+    
     
     if (cur_font->xft_ft) {
         XftDrawString16 (xft_draw, &sel_fg, cur_font->xft_ft, x,y, &ch, 1);
@@ -1474,11 +1480,11 @@ main (int argc, char **argv)
     // Connect to the Xserver and initialize scr
     xconn();
 
-    while ((ch = getopt(argc, argv, "hg:bdf:a:pu:B:F:U:n:o:")) != -1) {
+    while ((ch = getopt(argc, argv, "hg:bdf:a:pu:B:F:U:n:o:m:")) != -1) {
         switch (ch) {
             case 'h':
                 printf ("lemonbar version %s patched with XFT support\n", VERSION);
-                printf ("usage: %s [-h | -g | -b | -d | -f | -a | -p | -n | -u | -B | -F]\n"
+                printf ("usage: %s [-h | -g | -b | -d | -f | -a | -p | -n | -u | -B | -F | -m]\n"
                         "\t-h Show this help\n"
                         "\t-g Set the bar geometry {width}x{height}+{xoffset}+{yoffset}\n"
                         "\t-b Put the bar at the bottom of the screen\n"
@@ -1490,7 +1496,8 @@ main (int argc, char **argv)
                         "\t-u Set the underline/overline height in pixels\n"
                         "\t-B Set background color in #AARRGGBB\n"
                         "\t-F Set foreground color in #AARRGGBB\n"
-                        "\t-o Add a vertical offset to the text, it can be negative\n", argv[0]);
+                        "\t-o Add a vertical offset to the text, it can be negative\n"
+                        "\t-m Multiline redraw support (default is false)\n", argv[0]);
                 exit (EXIT_SUCCESS);
             case 'g': (void)parse_geometry_string(optarg, geom_v); break;
             case 'p': permanent = true; break;
@@ -1504,6 +1511,7 @@ main (int argc, char **argv)
             case 'F': dfgc = fgc = parse_color(optarg, NULL, (rgba_t)0xffffffffU); break;
             case 'U': dugc = ugc = parse_color(optarg, NULL, fgc); break;
             case 'a': areas = strtoul(optarg, NULL, 10); break;
+            case 'm': multiline = true; break;
         }
     }
 
