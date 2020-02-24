@@ -313,7 +313,7 @@ draw_char (monitor_t *mon, font_t *cur_font, int x, int align, uint16_t ch)
 
     if (multiline) {
         int ch_height = cur_font->ascent;
-        x = shift(mon, x, align, ch_width, y-ch_height, ch_height);
+        x = shift(mon, x, align, ch_width, y-ch_height, ch_height+cur_font->descent);
     } else {
         x = shift(mon, x, align, ch_width, 0, bh);
     }
