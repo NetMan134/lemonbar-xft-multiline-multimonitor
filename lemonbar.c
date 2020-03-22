@@ -1480,7 +1480,7 @@ main (int argc, char **argv)
     // Connect to the Xserver and initialize scr
     xconn();
 
-    while ((ch = getopt(argc, argv, "hg:bdf:a:pu:B:F:U:n:o:m:")) != -1) {
+    while ((ch = getopt(argc, argv, "hg:bdf:a:pu:B:F:U:n:o:m")) != -1) {
         switch (ch) {
             case 'h':
                 printf ("lemonbar version %s patched with XFT support\n", VERSION);
