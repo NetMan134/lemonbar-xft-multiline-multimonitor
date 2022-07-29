@@ -196,3 +196,7 @@ Xinerama support was kindly contributed by Stebalien
 RandR support was kindly contributed by jvvv
 
 Clickable areas support was heavily based off u-ra contribution
+
+=head1 LICENSE
+
+This project is re-distributed under The Unlicense.
